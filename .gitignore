@@ -3,3 +3,5 @@ data/
 env/
 .idea
 .DS_Store
+*.webm
+*.pyc

@@ -1,5 +1,9 @@
+Pillow==2.7.0
+decorator==3.4.0
+imageio==1.0
 matplotlib==1.4.2
 mock==1.0.1
+moviepy==0.2.2.03
 nose==1.3.4
 numexpr==2.4
 numpy==1.9.1
@@ -9,3 +13,4 @@ pytz==2014.10
 scikit-image==0.10.1
 scipy==0.14.1
 six==1.8.0
+tqdm==1.0

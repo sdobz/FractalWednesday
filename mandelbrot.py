@@ -21,39 +21,24 @@ MAX_ITERATION_COLOR = (0, 0, 0)
 RESIZE_METHOD = Image.LANCZOS
 
 
-class Mandelbrot:
-    max_i = 400
-    dpu = 512
-    gen_palette = staticmethod(gen_palette)
-
-    def __init__(self, w, h):
-        self.w = w
-        self.h = h
-
-    def generate_viewport(self, x, y, z):
-        return generate_viewport(x, y, z, self.dpu, self.w, self.h, self.max_i, self.gen_palette())
-
-
 def generate_viewport(x, y, z, dpu, w, h, max_i, palette):
     return np.asarray(generate_pil_viewport(x, y, z, dpu, w, h, max_i, palette), dtype=np.uint8)
 
 
 def generate_pil_viewport(x, y, z, dpu, w, h, max_i, palette):
-    log.info("""Generating PIL viewport at:
-             x: {}, y: {}, z: {}
-             dpu: {}, {}x{}""".format(x, y, z, dpu, w, h))
+    log.info("Generating PIL viewport...")
     tile_coord_list = generate_tileset_coords(x, y, dpu, w, h)
     tiles = []
 
     tile_z = int(ceil(z))
 
     for tile_x, tile_y in tile_coord_list:
-        tiles.append(Image.new(generate_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette), 'RGB'))
+        tiles.append(Image.fromarray(generate_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette), 'RGB'))
 
     img = Image.new('RGB', (w, h), MAX_ITERATION_COLOR)
 
     tile_scale = 1-(tile_z-z)
-    tile_size = dpu * tile_scale
+    tile_size = int(dpu * tile_scale)
 
     for tile, tile_coords in zip(tiles, tile_coord_list):
         tile_x, tile_y = tile_coords
@@ -111,6 +96,8 @@ def index_to_filename(x, y, z, dpu, max_i):
 
 
 def get_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
+    log.info("""Getting mandelbrot image
+    x: {}, y: {}, z: {}""".format(x, y, z, dpu, max_i))
     filename = index_to_filename(x, y, z, dpu, max_i) + '.npz'
 
     if path.exists(filename):
@@ -122,6 +109,7 @@ def get_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
 
 
 def generate_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
+    log.info("Does not exist, generating...")
     x0, y0 = index_transform(x, y, z)
     x1, y1 = index_transform(x+1, y+1, z)
 
@@ -196,7 +184,7 @@ def show_viewport():
     plt.imshow(generate_viewport(x, y, z, dpu=512, w=w, h=h, max_i=400, palette=palette), origin='lower')
     plt.show()
 
-# show_viewport()
+show_viewport()
 
 def show_colored_mandelbrot_matrix():
     x, y, z = 0, 0, 0
@@ -204,7 +192,7 @@ def show_colored_mandelbrot_matrix():
     palette = gen_palette()
 
     plt.figure()
-    plt.imshow(np.array(generate_colored_mandelbrot_image(x, y, z, dpu=400, max_i=400, palette=palette)), origin='lower')
+    plt.imshow(np.array(generate_colored_mandelbrot_matrix(x, y, z, dpu=400, max_i=400, palette=palette)), origin='lower')
     plt.show()
 
 # show_colored_mandelbrot_matrix()
