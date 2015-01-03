@@ -6,4 +6,6 @@ numpy==1.9.1
 pyparsing==2.0.3
 python-dateutil==2.3
 pytz==2014.10
+scikit-image==0.10.1
+scipy==0.14.1
 six==1.8.0

@@ -9,10 +9,43 @@ import matplotlib.pyplot as plt
 from math import floor, ceil
 from os import path
 import colorsys
+from PIL import Image
 
 # Data root with trailing slash
 DATA_ROOT = 'data/'
 MAX_ITERATION_COLOR = (0, 0, 0)
+RESIZE_METHOD = Image.LANCZOS
+
+
+def generate_viewport(x, y, z, dpu, w, h, max_i, palette):
+    image_list = generate_image_list(x, y, dpu, w, h)
+    tiles = []
+
+    tile_z = int(ceil(z))
+
+    for tile_x, tile_y in image_list:
+        tiles.append(generate_colored_mandelbrot_image(tile_x, tile_y, tile_z, dpu, max_i, palette))
+
+    img = Image.new('RGB', (w, h), MAX_ITERATION_COLOR)
+
+    tile_scale = 1-(tile_z-z)
+    tile_size_w = w * tile_scale
+    tile_size_h = h * tile_scale
+
+    for tile, tile_coords in zip(tiles, image_list):
+        tile_x, tile_y = tile_coords
+
+        tile_x_transform = w/2 + ((tile_x-x) * dpu)
+        tile_y_transform = h/2 + ((tile_y-y) * dpu)
+
+        tile_x_transform = int(round(tile_x_transform))
+        tile_y_transform = int(round(tile_y_transform))
+
+        tile_resized = tile.resize((tile_size_w, tile_size_h), RESIZE_METHOD)
+
+        img.paste(tile_resized, (tile_x_transform, tile_y_transform))
+
+    return img
 
 
 def generate_image_list(x, y, dpu, w, h):
@@ -39,7 +72,14 @@ def generate_colored_mandelbrot_image(x, y, z, dpu, max_i, palette):
         else:
             return palette[i % palette_length]
 
-    return colorize_matrix(mandel_data)[0]
+    colorized_data = colorize_matrix(mandel_data)
+    # starts as a 3 tuple of dpuxdpu integers
+    colorized_data = np.uint8(np.array(colorized_data))
+    # Turns it into an array of uint8s
+    colorized_data = np.rollaxis(colorized_data, axis=0, start=3)
+    # Starts (3, 400, 400), rollaxis moves the color to the last place (400, 400, 3)
+
+    return Image.fromarray(colorized_data, 'RGB')
 
 
 def index_to_filename(x, y, z, dpu, max_i):
@@ -101,9 +141,7 @@ def generate_mandelbrot_matrix(x0, x1, y0, y1, dpu, max_i):
     return escape
 
 
-def show_colored_mandelbrot_matrix():
-    x, y, z = 0, 0, 0
-
+def gen_palette():
     colors_max = 1000
 
     palette = [0] * colors_max
@@ -114,11 +152,34 @@ def show_colored_mandelbrot_matrix():
         #r, g, b = colorsys.hsv_to_rgb(.64+f/3, 1-f/2, f)
         palette[i] = (int(r*255), int(g*255), int(b*255))
 
+    return palette
+
+
+def show_viewport():
+    x, y, z = -0.5, 0, 0
+
+    dpu = 512
+
+    w, h = dpu * 3, dpu * 2
+
+    palette = gen_palette()
+
+    plt.figure()
+    plt.imshow(generate_viewport(x, y, z, dpu=512, w=w, h=h, max_i=400, palette=palette), origin='lower')
+    plt.show()
+
+show_viewport()
+
+def show_colored_mandelbrot_matrix():
+    x, y, z = 0, 0, 0
+
+    palette = gen_palette()
+
     plt.figure()
     plt.imshow(np.array(generate_colored_mandelbrot_image(x, y, z, dpu=400, max_i=400, palette=palette)), origin='lower')
     plt.show()
 
-show_colored_mandelbrot_matrix()
+# show_colored_mandelbrot_matrix()
 
 
 def show_indexed_mandelbrot_matrix():
