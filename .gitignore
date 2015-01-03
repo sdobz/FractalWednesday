@@ -1,0 +1,5 @@
+archive/
+data/
+env/
+.idea
+.DS_Store
