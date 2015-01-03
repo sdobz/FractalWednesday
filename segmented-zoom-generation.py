@@ -8,9 +8,11 @@ import numexpr as ne
 import matplotlib.pyplot as plt
 from math import floor, ceil
 from os import path
+import colorsys
 
 # Data root with trailing slash
 DATA_ROOT = 'data/'
+MAX_ITERATION_COLOR = (0, 0, 0)
 
 
 def generate_image_list(x, y, dpu, w, h):
@@ -27,13 +29,17 @@ def generate_image_list(x, y, dpu, w, h):
 
 def generate_colored_mandelbrot_image(x, y, z, dpu, max_i, palette):
     mandel_data = get_indexed_mandelbrot_matrix(x, y, z, dpu, max_i)
-    img = mandel_data.copy()
 
     palette_length = len(palette)
-    for x in np.nditer(img, op_flags=['readwrite']):
-        x[...] = palette[x % palette_length]
 
-    return mandel_data
+    @np.vectorize
+    def colorize_matrix(i):
+        if i == max_i:
+            return MAX_ITERATION_COLOR
+        else:
+            return palette[i % palette_length]
+
+    return colorize_matrix(mandel_data)[0]
 
 
 def index_to_filename(x, y, z, dpu, max_i):
@@ -98,7 +104,15 @@ def generate_mandelbrot_matrix(x0, x1, y0, y1, dpu, max_i):
 def show_colored_mandelbrot_matrix():
     x, y, z = 0, 0, 0
 
-    palette = [np.linspace(0, 255, num=30, dtype=np.uint8), np.linspace(0, 255, num=30, dtype=np.uint8), np.linspace(0, 255, num=30, dtype=np.uint8)]
+    colors_max = 1000
+
+    palette = [0] * colors_max
+    for i in xrange(colors_max):
+        f = 0+abs((float(i)/colors_max-1)**15) # white on outside black on inside
+        #f = 1-abs((float(i)/colors_max-1)**15) # black on outside white on inside
+        r, g, b = colorsys.hsv_to_rgb(.8+f/3, 1-f/8, f)
+        #r, g, b = colorsys.hsv_to_rgb(.64+f/3, 1-f/2, f)
+        palette[i] = (int(r*255), int(g*255), int(b*255))
 
     plt.figure()
     plt.imshow(np.array(generate_colored_mandelbrot_image(x, y, z, dpu=400, max_i=400, palette=palette)), origin='lower')
