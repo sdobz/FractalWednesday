@@ -213,6 +213,7 @@ def gen_palette():
         f = 0+abs((float(i)/colors_max-1)**15) # white on outside black on inside
         #f = 1-abs((float(i)/colors_max-1)**15) # black on outside white on inside
         r, g, b = colorsys.hsv_to_rgb(.8+f/3, 1-f/8, f)
+        #r, g, b = colorsys.hsv_to_rgb(.73+f/3, 1-f/8, f)
         #r, g, b = colorsys.hsv_to_rgb(.64+f/3, 1-f/2, f)
         palette[i] = (int(r*255), int(g*255), int(b*255))
 
