@@ -2,9 +2,8 @@ from mandelbrot import generate_viewport, gen_palette
 import md5
 from moviepy.video.VideoClip import VideoClip
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
 log = logging.getLogger(__name__)
-
 
 
 class Mandelbrot:
@@ -20,11 +19,6 @@ class Mandelbrot:
         self.h = h
 
     def gen_viewport(self, x, y, z):
-        cache_key = self.cache_key(x, y, z)
-
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-
         if not self.palette:
             self.palette = gen_palette()
 
@@ -45,10 +39,14 @@ class MandelbrotClip:
     def fly_to(self, x0, y0, x1, y1):
         pass
 
-    def make_index_to(self, x, y, z):
+    def make_index_to(self, x, y, start_z, end_z):
         def gen_frame(t):
             log.debug("Making frame at t={}".format(t))
-            z_t = z * (self.duration - t)/self.duration
+            if self.duration:
+                z_t = end_z - (start_z - end_z) * (t-self.duration)/self.duration
+                log.debug("Z: {}".format(z_t))
+            else:
+                z_t = 0
 
             return self.mandelbrot.gen_viewport(x, y, z_t)
 
@@ -56,6 +54,7 @@ class MandelbrotClip:
         pass
 
 
-video = MandelbrotClip(size=(320, 240), duration=2)
-video.make_index_to(-0.6483906250000001, 0.4554739583333333, 9)
-video.videoclip.write_videofile('out1.webm', 30, preset='ultrafast', threads=2)
+video = MandelbrotClip(size=(512, 512), duration=2)
+video.make_index_to(-1.772, 0.013, -3, 5)
+#video.videoclip.write_videofile('out1.webm', 10, preset='ultrafast', threads=2)
+video.videoclip.write_images_sequence(nameformat='output/frame%03d.png', fps=5)

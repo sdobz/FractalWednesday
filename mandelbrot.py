@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from math import floor, ceil
 from os import path
 import colorsys
-from PIL import Image
+from PIL import Image, ImageDraw
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
 
 
@@ -20,52 +20,92 @@ DATA_ROOT = 'data/'
 MAX_ITERATION_COLOR = (0, 0, 0)
 RESIZE_METHOD = Image.LANCZOS
 
-
-def generate_viewport(x, y, z, dpu, w, h, max_i, palette):
-    return np.asarray(generate_pil_viewport(x, y, z, dpu, w, h, max_i, palette), dtype=np.uint8)
+DEBUG = log.getEffectiveLevel() == logging.DEBUG
 
 
-def generate_pil_viewport(x, y, z, dpu, w, h, max_i, palette):
+def generate_viewport(u, v, z, dpu, w, h, max_i, palette):
+    return np.asarray(generate_pil_viewport(u, v, z, dpu, w, h, max_i, palette))
+
+
+def generate_pil_viewport(u, v, z, dpu, w, h, max_i, palette):
     log.info("Generating PIL viewport...")
-    tile_coord_list = generate_tileset_coords(x, y, dpu, w, h)
-    tiles = []
 
     tile_z = int(ceil(z))
+    x, y = transform_real(u, v, tile_z)
+    tile_size = dpu / 2**(ceil(z%1) - z%1)
+    tile_coord_list = generate_tileset_coords(x, y, tile_size, w, h)
+    log.debug(tile_coord_list)
+    tiles = []
 
     for tile_x, tile_y in tile_coord_list:
-        tiles.append(Image.fromarray(generate_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette), 'RGB'))
+        tiles.append(Image.fromarray(get_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette), 'RGB'))
 
     img = Image.new('RGB', (w, h), MAX_ITERATION_COLOR)
-
-    tile_scale = 1-(tile_z-z)
-    tile_size = int(dpu * tile_scale)
 
     for tile, tile_coords in zip(tiles, tile_coord_list):
         tile_x, tile_y = tile_coords
 
-        tile_x_transform = w/2 + ((tile_x-x) * dpu)
-        tile_y_transform = h/2 + ((tile_y-y) * dpu)
+        tile_viewport_x = (tile_x-x) * tile_size + w/2
+        tile_viewport_y = (tile_y-y) * tile_size + h/2
 
-        tile_x_transform = int(round(tile_x_transform))
-        tile_y_transform = int(round(tile_y_transform))
+        tile_viewport_x = int(floor(tile_viewport_x))
+        tile_viewport_y = int(floor(tile_viewport_y))
 
-        tile_resized = tile.resize((tile_size, tile_size), RESIZE_METHOD)
+        # log.debug("Transform: X: {}->{} Y: {}->{}".format(tile_viewport_x, tile_viewport_x + tile_size, tile_viewport_y, tile_viewport_y + tile_size))
 
-        img.paste(tile_resized, (tile_x_transform, tile_y_transform))
+        tile_size_int = int(floor((tile_size)))
+        tile_resized = tile.resize((tile_size_int, tile_size_int), RESIZE_METHOD)
+
+        img.paste(tile_resized, (tile_viewport_x, tile_viewport_y))
+
+    if DEBUG:
+        draw = ImageDraw.Draw(img)
+        draw.text((10, 10), "U: {}, V: {}".format(u, v), fill='red')
+        draw.text((10, 20), "Z: {}, X: {}, Y: {}".format(z, x, y), fill='red')
+        draw.text((10, 30), "Tile size: {} -> {}".format(dpu, tile_size_int), fill='red')
+
+        draw.line((w/2, 0, w/2, h), fill='red')
+        draw.line((0, h/2, w, h/2), fill='red')
+
+        for tile_x, tile_y in tile_coord_list:
+            tile_viewport_x = (tile_x-x) * tile_size + w/2
+            tile_viewport_y = (tile_y-y) * tile_size + h/2
+
+            draw.rectangle((tile_viewport_x, tile_viewport_y, tile_viewport_x + tile_size_int, tile_viewport_y + tile_size_int), outline='green')
+
+            draw.text((tile_viewport_x+10, tile_viewport_y+10), "Tile: {}, {}, {}".format(tile_x, tile_y, tile_z), fill='red')
 
     return img
 
 
-def generate_tileset_coords(x, y, dpu, w, h):
+mandelbrot_colored_memcache = {}
+def get_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette):
+    filename = index_to_filename(tile_x, tile_y, tile_z, dpu, max_i) + '.png'
+
+    if filename in mandelbrot_colored_memcache:
+        return mandelbrot_colored_memcache[filename]
+
+    mandelbrot_colored_memcache[filename] = generate_colored_mandelbrot_matrix(tile_x, tile_y, tile_z, dpu, max_i, palette)
+    return mandelbrot_colored_memcache[filename]
+
+
+def generate_tileset_coords(x, y, tile_size, w, h):
     # I transform from screen space (pixels) into index space (where 1 = 1 dpus worth of pixels)
-    half_index_width = (w/2) / dpu
-    half_index_height = (h/2) / dpu
+    half_index_width = w/tile_size/2
+    half_index_height = h/tile_size/2
+    log.debug(half_index_width)
 
     # int is also flooring
-    min_x, max_x = int(floor(x - half_index_width)), int(ceil(x + half_index_width))
-    min_y, max_y = int(floor(y - half_index_height)), int(ceil(y + half_index_height))
+    min_x, max_x = int(floor(x - half_index_width)), int(floor(x + half_index_width))
+    min_y, max_y = int(floor(y - half_index_height)), int(floor(y + half_index_height))
 
-    return [(x, y) for x in xrange(min_x, max_x) for y in xrange(min_y, max_y)]
+    log.debug("""Generating Coordinates
+              X, Y = {}, {}
+              {}x{}
+              X: {}->{}
+              Y: {}->{}""".format(x, y, w, h, min_x, max_x, min_y, max_y))
+
+    return [(x, y) for x in xrange(min_x, max_x+1) for y in xrange(min_y, max_y+1)]
 
 
 def generate_colored_mandelbrot_matrix(x, y, z, dpu, max_i, palette):
@@ -96,8 +136,8 @@ def index_to_filename(x, y, z, dpu, max_i):
 
 
 def get_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
-    log.info("""Getting mandelbrot image
-    x: {}, y: {}, z: {}""".format(x, y, z, dpu, max_i))
+    log.debug("""Getting mandelbrot image
+    x: {}, y: {}, z: {}""".format(x, y, z))
     filename = index_to_filename(x, y, z, dpu, max_i) + '.npz'
 
     if path.exists(filename):
@@ -109,19 +149,21 @@ def get_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
 
 
 def generate_indexed_mandelbrot_matrix(x, y, z, dpu, max_i):
-    log.info("Does not exist, generating...")
-    x0, y0 = index_transform(x, y, z)
-    x1, y1 = index_transform(x+1, y+1, z)
+    log.warn("Generating new mandelbrot {},{},{}".format(x, y, z))
+    u0, v0 = transform_index(x, y, z)
+    u1, v1 = transform_index(x+1, y+1, z)
 
-    return generate_mandelbrot_matrix(x0, x1, y0, y1, dpu, max_i)
+    return generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i)
 
 
-def index_transform(x, y, z):
+def transform_index(x, y, z):
+    # Takes index and returns real
     return x/(2**z), y/(2**z)
 
 
-def real_transform(x, y, z):
-    return (2**z)*x, (2**z)*y
+def transform_real(u, v, z):
+    # Takes real and returns index
+    return (2**z)*u, (2**z)*v
 
 
 # Check out:
@@ -129,10 +171,15 @@ def real_transform(x, y, z):
 
 # Using:
 # http://www.vallis.org/salon/summary-10.html
-def generate_mandelbrot_matrix(x0, x1, y0, y1, dpu, max_i):
+def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
     """Compute an dpu x dpu Mandelbrot matrix with maxi maximum iterations."""
 
-    xs, ys = np.meshgrid(np.linspace(x0, x1, dpu), np.linspace(y0, y1, dpu))
+    log.debug("""Mandelbrot parameters:
+              X {}->{}
+              Y {}->{}
+              {}px, i={}""".format(u0, u1, v0, v1, dpu, max_i))
+
+    xs, ys = np.meshgrid(np.linspace(u0, u1, dpu), np.linspace(v0, v1, dpu))
 
     z = np.zeros((dpu, dpu), 'complex128')
     c = xs + 1j*ys
@@ -153,6 +200,8 @@ def generate_mandelbrot_matrix(x0, x1, y0, y1, dpu, max_i):
         # because in numexpr abs(complex) is complex with 0 imaginary part
         escape = ne.evaluate('where(mask & (abs(z).real > 2),i,escape)')
 
+    log.debug(escape)
+
     return escape
 
 
@@ -169,22 +218,33 @@ def gen_palette():
 
     return palette
 
+def imshow(img):
+    plt.figure()
+    plt.imshow(img)
+    plt.show()
+
+
+def draw_text(img, x, y, text, color='red'):
+    draw = ImageDraw.Draw(img)
+    draw.text((x, y), text, fill=color)
+
 
 def show_viewport():
-    z = 1
-    x, y = real_transform(-.5, 0, z)
+    #x, y, z = -0.5, 0.0, -2.5
+    x, y, z = (-0.648390625, 0.455473958333, -1.5)
 
     dpu = 512
 
-    w, h = dpu * 3, dpu * 2
+    # w, h = dpu * 3, dpu * 2
+    w, h = 1260, 720
 
     palette = gen_palette()
 
     plt.figure()
-    plt.imshow(generate_viewport(x, y, z, dpu=512, w=w, h=h, max_i=400, palette=palette), origin='lower')
+    plt.imshow(generate_viewport(x, y, z, dpu=dpu, w=w, h=h, max_i=400, palette=palette), origin='lower')
     plt.show()
 
-show_viewport()
+#show_viewport()
 
 def show_colored_mandelbrot_matrix():
     x, y, z = 0, 0, 0
@@ -201,8 +261,8 @@ def show_colored_mandelbrot_matrix():
 def show_indexed_mandelbrot_matrix():
     x, y, z = 0, 0, 0
 
-    x0, y0 = index_transform(x, y, z)
-    x1, y1 = index_transform(x+1, y+1, z)
+    x0, y0 = transform_index(x, y, z)
+    x1, y1 = transform_index(x+1, y+1, z)
 
     plt.figure()
     plt.imshow(np.array(get_indexed_mandelbrot_matrix(x, y, z, dpu=400, max_i=400)), origin='lower', extent=(x0, x1, y0, y1))
@@ -220,3 +280,5 @@ def show_mandelbrot_matrix():
     plt.show()
 
 # show_mandelbrot_matrix()
+
+
