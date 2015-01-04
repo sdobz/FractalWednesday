@@ -11,7 +11,7 @@ from os import path
 import colorsys
 from PIL import Image, ImageDraw
 import logging
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
