@@ -172,7 +172,7 @@ def transform_real(u, v, z):
 # Using:
 # http://www.vallis.org/salon/summary-10.html
 def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
-    """Compute an dpu x dpu Mandelbrot matrix with maxi maximum iterations."""
+    """Compute an dpu x dpu Mandelbrot matrix with max_i maximum iterations."""
 
     log.debug("""Mandelbrot parameters:
               X {}->{}
@@ -207,17 +207,59 @@ def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
 
 def gen_palette():
     colors_max = 1000
+    cycle = 20
+    palette = [0] * colors_max
+    def scale_value(value, v_low, v_high, s_low, s_high):
+	# Scales value from v_low - v_high to s_low - s_high
+	if (v_high - v_low == 0):
+		return s_low
+        return (((value - v_low)/(v_high - v_low)) * (s_high - s_low)) + s_low
+	
+    for i in xrange(colors_max):
+	if i == colors_max:
+	    return MAX_ITERATION_COLOR
+	m = (i % cycle)/cycle
+	if m < 0.5:
+	    h = 240  # blue
+	    l = scale_value(m, 0, 0.5, 0, 100)
+	else:
+	    h = 30   # orange
+            l = scale_value(m, 0.5, 1, 100, 0);
+	
+	r, g, b = colorsys.hls_to_rgb(h, l, 0.50)
+	palette[i] = (int(r*255), int(g*255), int(b*255))
+
+    return palette
+
+# Alternative palette generators:
+
+"""def gen_palette():
+    colors_max = 1000
 
     palette = [0] * colors_max
     for i in xrange(colors_max):
-        f = 0+abs((float(i)/colors_max-1)**15) # white on outside black on inside
-        #f = 1-abs((float(i)/colors_max-1)**15) # black on outside white on inside
-        r, g, b = colorsys.hsv_to_rgb(.8+f/3, 1-f/8, f)
-        #r, g, b = colorsys.hsv_to_rgb(.73+f/3, 1-f/8, f)
+        #f = 0+abs((float(i)/colors_max-1)**15) # white on outside black on inside
+        f = 1-abs((float(i)/colors_max-1)**15) # black on outside white on inside
+        r, g, b = colorsys.hsv_to_rgb(.73+f/3, 1-f/8, f)
+	#r, g, b = colorsys.hsv_to_rgb(.73+f/3, 1-f/8, f)
         #r, g, b = colorsys.hsv_to_rgb(.64+f/3, 1-f/2, f)
         palette[i] = (int(r*255), int(g*255), int(b*255))
 
-    return palette
+    return palette"""
+
+"""def gen_palete():
+  h %= 1
+  h *= 6
+  c = 1
+  x = 1 - abs((h % 2) - 1)
+  rgb = ()
+  if   h < 1: rgb = (c, x, 0)
+  elif h < 2: rgb = (x, c, 0)
+  elif h < 3: rgb = (0, c, x)
+  elif h < 4: rgb = (0, x, c)
+  elif h < 5: rgb = (x, 0, c)
+  else:       rgb = (c, 0, x)
+  return (int(chan*255) for chan in rgb)"""
 
 def imshow(img):
     plt.figure()
@@ -281,5 +323,4 @@ def show_mandelbrot_matrix():
     plt.show()
 
 # show_mandelbrot_matrix()
-
 
