@@ -60,12 +60,12 @@ def generate_pil_viewport(u, v, z, dpu, w, h, max_i, palette):
 
     if DEBUG:
         draw = ImageDraw.Draw(img)
-        draw.text((10, 10), "U: {}, V: {}".format(u, v), fill='red')
-        draw.text((10, 20), "Z: {}, X: {}, Y: {}".format(z, x, y), fill='red')
-        draw.text((10, 30), "Tile size: {} -> {}".format(dpu, tile_size_int), fill='red')
+        draw.text((10, 10), "U: {}, V: {}".format(u, v), fill='black')
+        draw.text((10, 20), "Z: {}, X: {}, Y: {}".format(z, x, y), fill='black')
+        draw.text((10, 30), "Tile size: {} -> {}".format(dpu, tile_size_int), fill='black')
 
-        draw.line((w/2, 0, w/2, h), fill='red')
-        draw.line((0, h/2, w, h/2), fill='red')
+        draw.line((w/2, 0, w/2, h), fill='white')
+        draw.line((0, h/2, w, h/2), fill='white')
 
         for tile_x, tile_y in tile_coord_list:
             tile_viewport_x = (tile_x-x) * tile_size + w/2
@@ -199,8 +199,6 @@ def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
         # again where; taking the real part of abs is necessary here
         # because in numexpr abs(complex) is complex with 0 imaginary part
         escape = ne.evaluate('where(mask & (abs(z).real > 2),i,escape)')
-
-    log.debug(escape)
 
     return escape
 
