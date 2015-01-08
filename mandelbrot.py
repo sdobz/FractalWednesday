@@ -13,7 +13,6 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger(__name__)
 
-
 # Data root with trailing slash
 DATA_ROOT = 'data/'
 MAX_ITERATION_COLOR = (0, 0, 0)
@@ -21,10 +20,8 @@ RESIZE_METHOD = Image.LANCZOS
 
 DEBUG = log.getEffectiveLevel() == logging.DEBUG
 
-
 def generate_viewport(u, v, z, dpu, w, h, max_i, palette):
     return np.asarray(generate_pil_viewport(u, v, z, dpu, w, h, max_i, palette))
-
 
 def generate_pil_viewport(u, v, z, dpu, w, h, max_i, palette):
     log.info("Generating PIL viewport...")
