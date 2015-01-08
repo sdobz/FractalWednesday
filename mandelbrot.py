@@ -226,7 +226,7 @@ def gen_palette():
 	    h = 30   # orange
             l = scale_value(m, 0.5, 1, 100, 0);
 	
-	r, g, b = colorsys.hls_to_rgb(h, l, 0.50)
+	r, g, b = colorsys.hls_to_rgb(h, l, 0.81)
 	palette[i] = (int(r*255), int(g*255), int(b*255))
 
     return palette
