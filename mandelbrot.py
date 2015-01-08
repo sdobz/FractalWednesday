@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 # make integer division return a float
 from __future__ import division
 import numpy as np
