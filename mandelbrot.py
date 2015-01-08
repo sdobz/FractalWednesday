@@ -204,17 +204,16 @@ def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
 
     return escape
 
+def scale_value(value, v_low, v_high, s_low, s_high):
+	# Scales value from v_low - v_high to s_low - s_high
+	if (v_high - v_low == 0):
+		return s_low
+        return (((value - v_low)/(v_high - v_low)) * (s_high - s_low)) + s_low
 
 def gen_palette():
     colors_max = 1000
     cycle = 20
     palette = [0] * colors_max
-    def scale_value(value, v_low, v_high, s_low, s_high):
-	# Scales value from v_low - v_high to s_low - s_high
-	if (v_high - v_low == 0):
-		return s_low
-        return (((value - v_low)/(v_high - v_low)) * (s_high - s_low)) + s_low
-	
     for i in xrange(colors_max):
 	if i == colors_max:
 	    return MAX_ITERATION_COLOR
