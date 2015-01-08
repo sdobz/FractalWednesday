@@ -57,9 +57,9 @@ class MandelbrotClip:
 video = MandelbrotClip(size=(1280, 720), duration=20)
 #video.make_index_to(-1.772, 0.013, -5, 15)
 #video.make_index_to(-0.75538, 0.11220, -3, 15)
-#video.make_index_to(0.3750001200618655, -0.2166393884377127, -3, 15)
+video.make_index_to(0.3750001200618655, -0.2166393884377127, -3, 15)
 #video.make_index_to(-0.13856524454487512487, -0.64935990749191975, -3, 20)
-video.make_index_to(0.001643721971153, 0.822467633298876, -3, 50)
+#video.make_index_to(0.001643721971153, 0.822467633298876, -3, 50)
 video.videoclip.write_videofile('RealZoom.mp4', fps=25, preset='medium', threads=3)
 
 #video.videoclip.write_images_sequence(nameformat='output/frame%03d.png', fps=5)
