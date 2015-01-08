@@ -1,5 +1,5 @@
 from __future__ import division
-from mandelbrot import generate_viewport, gen_palette
+from mandelbrot_cstyle import generate_viewport, gen_palette
 import md5
 import colorsys
 from moviepy.video.VideoClip import VideoClip
@@ -44,22 +44,6 @@ class Mandelbrot:
             color = colorsys.hls_to_rgb(h, l, s)
             palette.append(color)
 
-        """
-        for i in xrange(cycle_size):
-            m = (i % cycle_size)/cycle_size
-            if m < 0.5:
-                h = 240 # blue
-                # black to white
-                l = m * 200
-            else:
-                h = 30 # orange
-                l = 100 - (m - 0.5 * 200)
-
-            log.warn("H: {} S: {} L: {} M:".format(h, 0.5, l, m))
-            r, g, b = colorsys.hls_to_rgb(h/255, l/100, 0.5)
-
-            palette.append((r*255, g*255, b*255))
-        """
         palette = [(np.uint8(r*255), np.uint8(g*255), np.uint8(b*255)) for r, g, b in palette]
         log.warn("Using palette: {}".format(palette))
         return palette
