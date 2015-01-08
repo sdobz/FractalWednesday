@@ -13,8 +13,8 @@ class Generator(object):
     """
     A stub generator that doesn't do much
     """
-    tile_size = 512
-    iterations = 400
+    tile_size = None
+    iterations = None
 
     def __init__(self, iterations=None, tile_size=None):
         if iterations:
@@ -27,13 +27,6 @@ class Generator(object):
 
 
 class NumexprGenerator(Generator):
-    def generate_tile(self, x, y, z):
-        log.warn("Generating new mandelbrot {},{},{}".format(x, y, z))
-        u0, v0 = transform_index(x, y, z)
-        u1, v1 = transform_index(x+1, y+1, z)
-
-        return self.generate_mandelbrot_matrix(u0, u1, v0, v1)
-
     # Check out:
     # https://github.com/Arachnid/exabrot/blob/master/mandelbrot.py
 

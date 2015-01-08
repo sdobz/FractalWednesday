@@ -34,3 +34,5 @@ class MandelbrotProcess(object):
     animator = None
 
     def generate_viewport(self, u, v, z):
+        self.composer.generate_viewport(u, v, z)
+
