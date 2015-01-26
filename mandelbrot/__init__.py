@@ -1,6 +1,8 @@
+from .composer import Composer
+from .base import Generator, TileManager, Renderer
 
 
-class MandelbrotProcess(object):
+class Mandelbrot(object):
     """
     This class contains the process of forming the mandelbrot fractal
     It uses a bunch of other classes to do the heavy lifting. These classes should be swappable
@@ -26,13 +28,19 @@ class MandelbrotProcess(object):
     Return view
     """
 
-    # Classes I might need
-    storage = None
-    generator = None
-    colorizer = None
-    composer = None
-    animator = None
+    def __init__(self, size, palette, max_color, iterations, tile_size, generator, tile_manager, renderer):
+        self.renderer = renderer(
+            size=size,
+            palette=palette,
+            max_color=max_color,
+            tile_manager=tile_manager(
+                generator=generator(
+                    iterations=iterations,
+                    tile_size=tile_size
+                )
+            )
+        )
+        self.composer = Composer(size=size, tile_size=tile_size)
 
-    def generate_viewport(self, u, v, z):
-        self.composer.generate_viewport(u, v, z)
-
+    def render_frame(self, u, v, z):
+        return self.renderer.render_renderset(self.composer.generate_renderset(u, v, z))
