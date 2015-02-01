@@ -40,8 +40,27 @@ def render_video(destination, start_z, end_z, size, duration, fps, filename):
             preset='medium',
             threads=3)
 
+from PIL import Image
 
 
+def render_frame(destination, z, size, filename):
+    proc = Mandelbrot(
+        renderer=PILRenderer,
+        size=size,
+        palette=blue_black_orange_white(cycle_size=30),
+        max_color=(0, 0, 0),
+        tile_manager=CachelessTileManager,
+        generator=NumexprGenerator,
+        iterations=100,
+        tile_size=512
+    )
+
+    Image.fromarray(proc.render_frame(destination[0], destination[1], z)).save(open(filename, 'w'))
+
+
+render_frame((0,0), 0, (1280, 720), 'out.png')
+
+"""
 render_video(destination=(-0.7483306070963540, 0.1492396240234374),
              start_z=-3,
              end_z=15,
@@ -49,3 +68,4 @@ render_video(destination=(-0.7483306070963540, 0.1492396240234374),
              duration=0,
              fps=1,
              filename='TriciaZoom2.mp4')
+"""

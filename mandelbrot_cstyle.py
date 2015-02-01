@@ -270,20 +270,20 @@ def draw_text(img, x, y, text, color='red'):
 
 def show_viewport():
     #x, y, z = -0.5, 0.0, -2.5
-    x, y, z = (-0.648390625, 0.455473958333, -1.5)
+    x, y, z = (-0.648390625, 0.455473958333, 1)
 
     dpu = 512
 
     # w, h = dpu * 3, dpu * 2
-    w, h = 1260, 720
+    w, h = 200, 200
 
     palette = gen_palette()
 
     plt.figure()
-    plt.imshow(generate_viewport(x, y, z, dpu=dpu, w=w, h=h, max_i=400, palette=palette), origin='lower')
+    plt.imshow(np.array(generate_viewport(x, y, z, dpu=dpu, w=w, h=h, max_i=400, palette=palette)), origin='lower')
     plt.show()
 
-#show_viewport()
+show_viewport()
 
 def show_colored_mandelbrot_matrix():
     x, y, z = 0, 0, 0

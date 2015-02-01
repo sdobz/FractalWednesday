@@ -1,6 +1,10 @@
 from PIL import Image
 import numpy as np
 from .base import Renderer
+import numpy as np
+import logging
+logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 
 class NumpyColorRenderer(Renderer):
@@ -27,9 +31,37 @@ class NumpyColorRenderer(Renderer):
 
         return colorized_data
 
+from PIL import ImageDraw
+
 
 class PILRenderer(NumpyColorRenderer):
     resample_method = Image.LANCZOS
+    debug = True
+
+    @staticmethod
+    def print_thing(name, func, *things, **named_things):
+        out = func(*things, **named_things)
+        print(name)
+        print(out)
+        return out
+
+    def add_debug_info(self, renderset, img):
+        if self.debug:
+            apparent_tile_size = renderset.apparent_tile_size
+            draw = ImageDraw.Draw(img)
+
+            draw.text((10, 10), 'S: {}'.format(apparent_tile_size), fill='green')
+
+            draw.line((self.w/2, 0, self.w/2, self.h), fill='white')
+            draw.line((0, self.h/2, self.w, self.h/2), fill='white')
+
+            for tile in renderset.data_tiles:
+                draw.rectangle((tile.pix_x, tile.pix_y,
+                                tile.pix_x + apparent_tile_size, tile.pix_y + apparent_tile_size), outline='green')
+
+                draw.text((tile.pix_x+3, tile.pix_y+3), "Tile: {}, {}, {}".format(tile.x, tile.y, tile.z), fill='red')
+
+        return img
 
     def render_renderset(self, renderset):
         apparent_tile_size = renderset.apparent_tile_size
@@ -41,5 +73,4 @@ class PILRenderer(NumpyColorRenderer):
                     resample=self.resample_method),
                 box=(tile.pix_x, tile.pix_y)
             )
-
-        return np.asarray(img)
+        return np.asarray(self.add_debug_info(renderset, img))

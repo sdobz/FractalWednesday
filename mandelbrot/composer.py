@@ -1,3 +1,4 @@
+from __future__ import division
 from math import floor, ceil
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -46,7 +47,7 @@ class Composer(object):
 
         # The floors of the window bounds
         min_x, max_x = int(floor(x - half_index_width)), int(floor(x + half_index_width))
-        min_y, max_y = int(floor(y - half_index_height)), int(floor(y + half_index_height))
+        min_y, max_y = int(ceil(y - half_index_height)), int(ceil(y + half_index_height))
 
         log.debug("""Generating tile_list
                   X, Y = {}, {}
@@ -70,7 +71,7 @@ class Composer(object):
                                  x=tile_coord[0],
                                  y=tile_coord[1],
                                  z=tile_z,
-                                 pix_x=int(round((x-tile_coord[0]) * apparent_tile_size + self.w/2)),
-                                 pix_y=int(round((y-tile_coord[1]) * apparent_tile_size + self.h/2)))
+                                 pix_x=int(round((tile_coord[0]-x) *  apparent_tile_size + self.w/2)),
+                                 pix_y=int(round((tile_coord[1]-y) * -apparent_tile_size + self.h/2)))
                              for tile_coord in tile_coords
                          ])
