@@ -16,7 +16,10 @@ log = logging.getLogger(__name__)
 # Data root with trailing slash
 DATA_ROOT = 'data/'
 MAX_ITERATION_COLOR = (0, 0, 0)
-RESIZE_METHOD = Image.LANCZOS
+try:
+    RESIZE_METHOD = Image.LANCZOS
+except AttributeError:
+    RESIZE_METHOD = Image.ANTIALIAS
 
 DEBUG = log.getEffectiveLevel() == logging.DEBUG
 
@@ -186,12 +189,10 @@ def generate_mandelbrot_matrix(u0, u1, v0, v1, dpu, max_i):
     for i in xrange(1, max_i):
         # we're just wrapping the numpy expression with `evaluate`
         mask = ne.evaluate('escape == max_i')
-
         # boolean indexing is not too numexpr-friendly, so instead we use
         # the numpy function `where(cond,then,else)` and set z to 0
         # at already-escaped points, to avoid overflows
         z = ne.evaluate('where(mask,z**2+c,0)')
-
         # again where; taking the real part of abs is necessary here
         # because in numexpr abs(complex) is complex with 0 imaginary part
         escape = ne.evaluate('where(mask & (abs(z).real > 2),i,escape)')
@@ -230,7 +231,7 @@ def gen_palette():
 # Alternative palette generators:
 
 """def gen_palette():
-    colors_max = 1000
+    colors_max = 20
 
     palette = [0] * colors_max
     for i in xrange(colors_max):
@@ -270,6 +271,7 @@ def draw_text(img, x, y, text, color='red'):
 
 def show_viewport():
     #x, y, z = -0.5, 0.0, -2.5
+    #x, y, z = (-0.648390625, 0.455473958333, -1.5)
     x, y, z = (-0.648390625, 0.455473958333, 1)
 
     dpu = 512
@@ -281,6 +283,7 @@ def show_viewport():
 
     plt.figure()
     plt.imshow(np.array(generate_viewport(x, y, z, dpu=dpu, w=w, h=h, max_i=400, palette=palette)), origin='lower')
+    plt.imshow(generate_viewport(x, y, z, dpu=dpu, w=w, h=h, max_i=400, palette=palette), origin='upper')
     plt.show()
 
 show_viewport()
@@ -299,10 +302,8 @@ def show_colored_mandelbrot_matrix():
 
 def show_indexed_mandelbrot_matrix():
     x, y, z = 0, 0, 0
-
     x0, y0 = transform_index(x, y, z)
     x1, y1 = transform_index(x+1, y+1, z)
-
     plt.figure()
     plt.imshow(np.array(get_indexed_mandelbrot_matrix(x, y, z, dpu=400, max_i=400)), origin='lower', extent=(x0, x1, y0, y1))
     plt.show()
