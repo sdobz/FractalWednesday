@@ -1,8 +1,8 @@
 from mandelbrot import Mandelbrot
-from mandelbrot.generators import NumexprGenerator
+from mandelbrot.generators import NumexprGenerator, PerturbedGenerator
 from mandelbrot.renderers import PILRenderer
 from mandelbrot.palettes import blue_black_orange_white
-from mandelbrot.tile_managers import CachelessTileManager
+from mandelbrot.tile_managers import CachelessTileManager, NumpyCompressedTileManager, ZODBTileManager
 
 from moviepy.video.VideoClip import VideoClip
 import logging
@@ -16,9 +16,9 @@ def render_video(destination, start_z, end_z, size, duration, fps, filename):
         size=size,
         palette=blue_black_orange_white(cycle_size=30),
         max_color=(0, 0, 0),
-        tile_manager=CachelessTileManager,
+        tile_manager=ZODBTileManager,
         generator=NumexprGenerator,
-        iterations=1000,
+        iterations=100,
         tile_size=512
     )
 
@@ -50,22 +50,21 @@ def render_frame(destination, z, size, filename):
         palette=blue_black_orange_white(cycle_size=30),
         max_color=(0, 0, 0),
         tile_manager=CachelessTileManager,
-        generator=NumexprGenerator,
+        generator=PerturbedGenerator,
         iterations=100,
         tile_size=512
     )
 
     Image.fromarray(proc.render_frame(destination[0], destination[1], z)).save(open(filename, 'w'))
 
-
-render_frame((0,0), 0, (1280, 720), 'out.png')
+#render_frame((0,0), 0, (1280, 720), 'out.png')
 
 """
 render_video(destination=(-0.7483306070963540, 0.1492396240234374),
              start_z=-3,
              end_z=15,
              size=(1280, 720),
-             duration=0,
-             fps=1,
-             filename='TriciaZoom2.mp4')
+             duration=10,
+             fps=60,
+             filename='NewZoom.mp4')
 """

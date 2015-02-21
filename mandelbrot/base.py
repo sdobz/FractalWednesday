@@ -14,7 +14,7 @@ class TileManager(object):
 
     def get_tile_key(self, tile):
         # This is potentially irreversible (use a hash function to store x, y, z)
-        return "{}mandelbrotX{}Y{}Z{}D{}I{}".format(tile.x, tile.y, tile.z, self.generator.tile_size, self.generator.iterations)
+        return "mandelbrotX{}Y{}Z{}D{}I{}".format(tile.x, tile.y, tile.z, self.generator.tile_size, self.generator.iterations)
 
     def get_tile_data(self, tile):
         raise ToImplement
